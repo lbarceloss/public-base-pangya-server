@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ghost · Live Monitor</title>
+    <style>
+        :root {
+            --bg0: #070b12;
+            --bg1: #0b111c;
+            --card: rgba(255,255,255,.035);
+            --card-brd: rgba(255,255,255,.08);
+            --txt: #e6edf6;
+            --muted: #7d8ba0;
+            --cy: #22d3ee;
+            --tl: #2dd4bf;
+            --grad: linear-gradient(135deg, #22d3ee 0%, #2dd4bf 100%);
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; }
+        body {
+            background:
+                radial-gradient(1200px 600px at 15% -10%, rgba(34,211,238,.10), transparent 60%),
+                radial-gradient(1000px 500px at 100% 0%, rgba(45,212,191,.08), transparent 55%),
+                var(--bg0);
+            color: var(--txt);
+            font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---- header ---- */
+        header {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--card-brd);
+            background: linear-gradient(180deg, rgba(11,17,28,.9), rgba(11,17,28,.5));
+            position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+        }
+        .logo {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: var(--grad); color: #04222a; font-weight: 800; font-size: 20px;
+            display: grid; place-items: center;
+            box-shadow: 0 6px 20px rgba(34,211,238,.35);
+        }
+        .brand b { font-size: 18px; letter-spacing: .3px; }
+        .brand span { display: block; font-size: 12px; color: var(--muted); margin-top: -1px; }
+        .spacer { flex: 1; }
+        .pill {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+            border: 1px solid var(--card-brd); background: var(--card);
+        }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: #f85149; box-shadow: 0 0 0 0 rgba(248,81,73,.5); }
+        .pill.on .dot { background: #3fb950; animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(63,185,80,.5)} 70%{box-shadow:0 0 0 8px rgba(63,185,80,0)} 100%{box-shadow:0 0 0 0 rgba(63,185,80,0)} }
+        .count-badge { background: var(--grad); color:#04222a; font-weight:800; }
+
+        /* ---- layout ---- */
+        main { padding: 22px; max-width: 1400px; margin: 0 auto; }
+        .focus-card {
+            background: var(--card); border: 1px solid var(--card-brd); border-radius: 18px;
+            padding: 14px; margin-bottom: 24px; overflow: hidden;
+        }
+        .focus-head { display:flex; align-items:center; gap:10px; margin: 2px 4px 12px; }
+        .focus-head .who { font-weight: 700; font-size: 16px; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        #div-focus { display: flex; justify-content: center; }
+        #div-focus img {
+            width: 100%; max-width: 900px; border-radius: 12px; background: #05080e;
+            aspect-ratio: 16/9; object-fit: contain; border: 1px solid var(--card-brd);
+        }
+
+        .section-title {
+            display:flex; align-items:center; gap:10px; margin: 26px 4px 12px; font-size: 13px;
+            letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+        }
+        .section-title::before { content:""; width:6px; height:6px; border-radius:50%; background: var(--cy); box-shadow:0 0 8px var(--cy); }
+        .section-title.stop::before { background: var(--muted); box-shadow:none; }
+
+        .mozaic { display: flex; flex-wrap: wrap; gap: 14px; }
+        .thumb {
+            background: var(--card); border: 1px solid var(--card-brd); border-radius: 14px;
+            padding: 8px; width: 230px; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+            cursor: pointer;
+        }
+        .thumb:hover { transform: translateY(-2px); border-color: rgba(34,211,238,.5); }
+        .thumb.focused { border-color: var(--cy); box-shadow: 0 0 0 1px var(--cy), 0 8px 30px rgba(34,211,238,.25); }
+        .thumb .who {
+            font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 8px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt);
+        }
+        .thumb img { width: 100%; border-radius: 9px; background: #05080e; aspect-ratio: 16/9; object-fit: contain; display: block; }
+
+        .empty { color: var(--muted); font-size: 13px; padding: 8px 4px; }
+        .hint {
+            margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--card-brd);
+            color: var(--muted); font-size: 12.5px; text-align: center;
+        }
+        .hint b { color: var(--cy); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">G</div>
+        <div class="brand"><b>Ghost</b><span>Live Monitor</span></div>
+        <div class="spacer"></div>
+        <div class="pill" id="conn"><span class="dot"></span><span id="conn-txt">conectando…</span></div>
+        <div class="pill count-badge"><span id="live-count">0</span>&nbsp;ao vivo</div>
+    </header>
+
+    <main>
+        <!-- template escondido (a JS clona) -->
+        <div id="image-template" style="display:none;" class="thumb">
+            <div class="who">#</div>
+            <img src="">
+        </div>
+
+        <div class="focus-card">
+            <div class="focus-head"><div class="who" id="focus-label">—</div></div>
+            <div id="div-focus"><img src="" value="0"></div>
+        </div>
+
+        <div class="section-title">Ao vivo</div>
+        <div id="div-mozaic-live" class="mozaic"><div class="empty" id="empty-live">nenhum player transmitindo…</div></div>
+
+        <div class="section-title stop">Pausado</div>
+        <div id="div-mozaic-stop" class="mozaic"></div>
+
+        <div class="hint">
+            <b>clique</b> foca &nbsp;·&nbsp; <b>ALT+clique</b> alterna captura (DirectX/GDI) &nbsp;·&nbsp; <b>SHIFT+clique</b> pausa/retoma
+        </div>
+    </main>
+
+<script>
+    // Mesma lógica do stream_monitor.php, no MESMO host/porta que serviu esta página.
+    const HOST = window.location.hostname || '127.0.0.1';
+    const PORT = window.location.port || 4573;
+
+    const IMAGE_FOCUS = document.querySelector('#div-focus img');
+    const FOCUS_LABEL = document.getElementById('focus-label');
+    const MOZAIC_LIVE = document.getElementById('div-mozaic-live');
+    const IMAGE_TEMPLATE = document.getElementById('image-template');
+    const CONN = document.getElementById('conn');
+    const CONN_TXT = document.getElementById('conn-txt');
+    const LIVE_COUNT = document.getElementById('live-count');
+    const EMPTY_LIVE = document.getElementById('empty-live');
+
+    function refreshCount() {
+        const n = MOZAIC_LIVE.querySelectorAll('.thumb').length;
+        LIVE_COUNT.textContent = n;
+        if (EMPTY_LIVE) EMPTY_LIVE.style.display = n ? 'none' : 'block';
+    }
+
+    const socket = new WebSocket(`ws://${HOST}:${PORT}`);
+    socket.onopen  = () => { CONN.classList.add('on'); CONN_TXT.textContent = 'conectado'; };
+    socket.onclose = () => { CONN.classList.remove('on'); CONN_TXT.textContent = 'desconectado'; };
+    socket.onerror = () => { CONN.classList.remove('on'); CONN_TXT.textContent = 'erro'; };
+
+    socket.onmessage = (image) => {
+        const evt = JSON.parse(image.data);
+        const id = `image-${evt.id}`;
+
+        if (IMAGE_FOCUS.getAttribute('value') == id) {
+            if (evt.frame) IMAGE_FOCUS.src = `data:image/jpeg;base64,${evt.frame}`;
+            if (evt.nickname) FOCUS_LABEL.textContent = evt.nickname || '—';
+        }
+
+        let imageElement = document.getElementById(id);
+        if (!imageElement) {
+            if (evt.type == 3 && evt.frame == null && evt.close) return;
+            const card = IMAGE_TEMPLATE.cloneNode(true);
+            card.id = undefined; card.style.display = 'block';
+            if (evt.nickname) card.children[0].innerHTML = evt.nickname || '#';
+            imageElement = card.children[1];
+            imageElement.id = id;
+            card.addEventListener('click', function (m) {
+                const pid = id.replace('image-', '');
+                if (m.altKey) { socket.send(JSON.stringify({ type: 'TOGGLE-CAPTURE', id: pid })); return; }
+                if (m.shiftKey) { socket.send(JSON.stringify({ type: 'TOGGLE-SEND-FRAMES', id: pid })); return; }
+                document.querySelectorAll('.thumb.focused').forEach(e => e.classList.remove('focused'));
+                card.classList.add('focused');
+                IMAGE_FOCUS.setAttribute('value', id);
+                IMAGE_FOCUS.src = imageElement.src;
+                FOCUS_LABEL.textContent = card.children[0].textContent || '—';
+                socket.send(JSON.stringify({ type: 'FOCUS-4', id: pid }));
+            });
+            MOZAIC_LIVE.appendChild(card);
+            refreshCount();
+        } else if (evt.type == 3 && evt.frame == null && evt.close) {
+            const card = imageElement.parentElement;
+            if (card && card.parentElement) card.parentElement.removeChild(card);
+            refreshCount();
+            return;
+        }
+
+        if (evt.frame) imageElement.src = `data:image/jpeg;base64,${evt.frame}`;
+        if (evt.nickname) imageElement.parentElement.children[0].innerHTML = evt.nickname || '#';
+
+        if (IMAGE_FOCUS.getAttribute('value') == 0) {
+            IMAGE_FOCUS.setAttribute('value', id);
+            IMAGE_FOCUS.src = imageElement.src;
+            FOCUS_LABEL.textContent = imageElement.parentElement.children[0].textContent || '—';
+            imageElement.parentElement.classList.add('focused');
+        }
+    };
+</script>
+</body>
+</html>

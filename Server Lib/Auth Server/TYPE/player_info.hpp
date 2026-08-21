@@ -1,0 +1,23 @@
+
+#pragma once
+#ifndef _STDA_PLAYER_INFO_HPP
+#define _STDA_PLAYER_INFO_HPP
+
+#include "pangya_auth_st.h"
+
+namespace stdA {
+	class PlayerInfo : public player_info {
+		public:
+			PlayerInfo();
+			virtual ~PlayerInfo();
+
+			void clear();
+
+		public:
+			unsigned char m_state;
+			unsigned char m_place;
+			uint32_t m_server_uid;
+	};
+}
+
+#endif

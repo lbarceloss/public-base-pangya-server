@@ -1,0 +1,15 @@
+{
+  "name": "stream-monitor-relay",
+  "version": "1.0.0",
+  "description": "Relay WebSocket do Stream Monitor (webshot) - repassa frames dos capturadores (clientes PangYa) para os viewers (GM web). Fala o protocolo do www/pangya/gm_tools/stream_monitor.php.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test-capturer": "node test_capturer.js"
+  },
+  "author": "gh0st / SuperSS Dev",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "ws": "^7.5.13"
+  }
+}
